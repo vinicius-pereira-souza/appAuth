@@ -84,6 +84,8 @@ export async function login(req: Request, res: Response) {
   }
 }
 
+export async function getUserData(req: Request, res: Response) {}
+
 export async function updateProfile(req: Request, res: Response) {}
 
 export async function changePassword(req: Request, res: Response) {}

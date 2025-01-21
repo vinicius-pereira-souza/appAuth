@@ -7,6 +7,7 @@ import {
   changePassword,
   forgetPassword,
   deleteAccount,
+  getUserData,
 } from "../controllers/auth-controller";
 
 // Middleware
@@ -22,6 +23,7 @@ const router = Router()
   .post("/change-password", isAuthenticated, changePassword)
   .post("/forgot-password", forgetPassword)
   .post("/logout", isAuthenticated, logout)
-  .delete("/delete-account", isAuthenticated, deleteAccount);
+  .delete("/delete-account", isAuthenticated, deleteAccount)
+  .get("/", isAuthenticated, getUserData);
 
 export default router;
