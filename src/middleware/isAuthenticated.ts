@@ -6,9 +6,34 @@ export default async function isAuthenticated(
   res: Response,
   next: NextFunction,
 ) {
-  // step 1: pegar o cookie da sessão
-  // step 2: validar o token do cookie da sessão
-  // step 3: pegar o token da sessão
-  // step 4: validar o token da sessão
-  // step 5: avançar
+  try {
+    const cookie = req.cookies.session;
+    if (!cookie) {
+      return res
+        .status(401)
+        .json({ message: "Cookie not found. Please log in." });
+    }
+
+    const sessionToken: string | undefined = req.session.user?.session;
+    if (!sessionToken) {
+      return res
+        .status(401)
+        .json({ message: "Session token not found. Please log in." });
+    }
+
+    const validateSessionToken = await decrypt(sessionToken);
+
+    if (!validateSessionToken) {
+      return res
+        .status(403)
+        .json({ message: "Invalid session token. Please log in again." });
+    }
+
+    next();
+  } catch (error) {
+    console.error("Error during authentication: ", error);
+    return res.status(500).json({
+      message: "An unexpected error occurred. Please try again later.",
+    });
+  }
 }

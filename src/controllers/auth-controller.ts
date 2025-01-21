@@ -95,4 +95,5 @@ export async function logout(req: Request, res: Response) {
   //   .clearCookie("connect.sid")
   //   .status(200)
   //   .json({ message: "An error has occurred, please try again later" });
+  return res.status(200).send("logout");
 }

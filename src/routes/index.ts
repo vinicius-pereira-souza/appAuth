@@ -10,6 +10,6 @@ const router = Router()
   })
   .post("/signup", signup)
   .post("/login", login)
-  .post("/logout", logout);
+  .post("/logout", isAuthenticated, logout);
 
 export default router;
