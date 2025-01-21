@@ -85,15 +85,21 @@ export async function login(req: Request, res: Response) {
 }
 
 export async function logout(req: Request, res: Response) {
-  // req.session.destroy((error) => {
-  //   if (error) {
-  //     console.error("error during session destruction", error);
-  //     return res.status(500).json({ message: "Error during logout:" });
-  //   }
-  // });
-  // return res
-  //   .clearCookie("connect.sid")
-  //   .status(200)
-  //   .json({ message: "An error has occurred, please try again later" });
-  return res.status(200).send("logout");
+  try {
+    req.session.destroy((error) => {
+      if (error) {
+        console.error("error during session destruction", error);
+        return res.status(500).json({ message: "Error during logout:" });
+      }
+    });
+    return res
+      .clearCookie("session")
+      .status(200)
+      .json({ message: "logout successful" });
+  } catch (error) {
+    console.log("Error during registration: ", error);
+    return res
+      .status(500)
+      .json({ message: "An error has occurred, please try again later" });
+  }
 }
