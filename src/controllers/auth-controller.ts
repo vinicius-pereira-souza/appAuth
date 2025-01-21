@@ -84,6 +84,12 @@ export async function login(req: Request, res: Response) {
   }
 }
 
+export async function updateProfile(req: Request, res: Response) {}
+
+export async function changePassword(req: Request, res: Response) {}
+
+export async function forgetPassword(req: Request, res: Response) {}
+
 export async function logout(req: Request, res: Response) {
   try {
     req.session.destroy((error) => {
@@ -103,3 +109,5 @@ export async function logout(req: Request, res: Response) {
       .json({ message: "An error has occurred, please try again later" });
   }
 }
+
+export async function deleteAccount(req: Request, res: Response) {}

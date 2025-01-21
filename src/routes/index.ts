@@ -1,5 +1,13 @@
 import { Router, Response } from "express";
-import { signup, login, logout } from "../controllers/auth-controller";
+import {
+  signup,
+  login,
+  logout,
+  updateProfile,
+  changePassword,
+  forgetPassword,
+  deleteAccount,
+} from "../controllers/auth-controller";
 
 // Middleware
 import isAuthenticated from "../middleware/isAuthenticated";
@@ -10,6 +18,10 @@ const router = Router()
   })
   .post("/signup", signup)
   .post("/login", login)
-  .post("/logout", isAuthenticated, logout);
+  .put("/update-profile", isAuthenticated, updateProfile)
+  .post("/change-password", isAuthenticated, changePassword)
+  .post("/forgot-password", forgetPassword)
+  .post("/logout", isAuthenticated, logout)
+  .delete("/delete-account", isAuthenticated, deleteAccount);
 
 export default router;
