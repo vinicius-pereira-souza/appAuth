@@ -1,7 +1,12 @@
 import { Request, Response } from "express";
-import { loginFormSchema, signupFormSchema } from "../lib/validations";
+import {
+  loginFormSchema,
+  signupFormSchema,
+  changePasswordSchema,
+} from "../lib/validations";
 import { hashSync, compareSync } from "bcrypt";
-import { createSession } from "../lib/session";
+import { createSession, decrypt, getSession } from "../lib/session";
+import { responseServerError } from "../utils";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -42,10 +47,7 @@ export async function signup(req: Request, res: Response) {
       .status(201)
       .json({ message: "authentication successful, we will redirect you" });
   } catch (error) {
-    console.log("Error during registration: ", error);
-    return res
-      .status(500)
-      .json({ message: "An error has occurred, please try again later" });
+    responseServerError(error, res);
   }
 }
 
@@ -77,20 +79,59 @@ export async function login(req: Request, res: Response) {
       .status(201)
       .json({ message: "authentication successful, we will redirect you" });
   } catch (error) {
-    console.log("Error during registration: ", error);
-    return res
-      .status(500)
-      .json({ message: "An error has occurred, please try again later" });
+    responseServerError(error, res);
   }
 }
+
+export async function forgetPassword(req: Request, res: Response) {}
 
 export async function getUserData(req: Request, res: Response) {}
 
 export async function updateProfile(req: Request, res: Response) {}
 
-export async function changePassword(req: Request, res: Response) {}
+export async function changePassword(req: Request, res: Response) {
+  try {
+    const { error, data } = changePasswordSchema.safeParse(req.body);
 
-export async function forgetPassword(req: Request, res: Response) {}
+    if (error) {
+      return res.status(400).json({ error: error.flatten().fieldErrors });
+    }
+
+    const session = await getSession(req, res);
+    const validatedToken = await decrypt(session);
+
+    if (!validatedToken) {
+      return res
+        .status(403)
+        .json({ message: "Invalid session. Please login again." });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: `${validatedToken.userId}` },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const { oldPassword, newPassword } = data;
+
+    if (!compareSync(oldPassword, user.password)) {
+      return res.status(400).json({ message: "incorrect password" });
+    }
+
+    const newPasswordHash = hashSync(newPassword, 10);
+
+    await prisma.user.update({
+      where: { id: `${validatedToken.userId}` },
+      data: { password: newPasswordHash },
+    });
+
+    return res.status(200).json({ message: "password updated successfully" });
+  } catch (error) {
+    responseServerError(error, res);
+  }
+}
 
 export async function logout(req: Request, res: Response) {
   try {
@@ -105,10 +146,7 @@ export async function logout(req: Request, res: Response) {
       .status(200)
       .json({ message: "logout successful" });
   } catch (error) {
-    console.log("Error during registration: ", error);
-    return res
-      .status(500)
-      .json({ message: "An error has occurred, please try again later" });
+    responseServerError(error, res);
   }
 }
 
