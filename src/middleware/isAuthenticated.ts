@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { decrypt } from "../lib/session";
+import { decrypt, getSession } from "../lib/session";
+import { responseServerError } from "../utils";
 
 export default async function isAuthenticated(
   req: Request,
@@ -14,14 +15,9 @@ export default async function isAuthenticated(
         .json({ message: "Cookie not found. Please log in." });
     }
 
-    const sessionToken: string | undefined = req.session.user?.session;
-    if (!sessionToken) {
-      return res
-        .status(401)
-        .json({ message: "Session token not found. Please log in." });
-    }
+    const session = await getSession(req, res);
 
-    const validateSessionToken = await decrypt(sessionToken);
+    const validateSessionToken = await decrypt(session);
 
     if (!validateSessionToken) {
       return res
@@ -31,9 +27,6 @@ export default async function isAuthenticated(
 
     next();
   } catch (error) {
-    console.error("Error during authentication: ", error);
-    return res.status(500).json({
-      message: "An unexpected error occurred. Please try again later.",
-    });
+    responseServerError(error, res);
   }
 }

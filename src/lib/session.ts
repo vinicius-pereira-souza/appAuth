@@ -1,4 +1,4 @@
-import { Request } from "express";
+import { Request, Response } from "express";
 import { JWTPayload, SignJWT, jwtVerify } from "jose";
 import config from "config";
 
@@ -39,5 +39,20 @@ export async function createSession(userId: string, req: Request) {
 
   if (session) {
     req.session.user = { session };
+  }
+}
+
+export async function getSession(req: Request, res: Response) {
+  try {
+    const sessionToken: string | undefined = req.session.user?.session;
+    if (!sessionToken) {
+      res
+        .status(401)
+        .json({ message: "Session token not found. Please log in." });
+    }
+
+    return sessionToken;
+  } catch (error) {
+    console.log("Failed to verify session", error);
   }
 }
