@@ -85,7 +85,36 @@ export async function login(req: Request, res: Response) {
 
 export async function forgetPassword(req: Request, res: Response) {}
 
-export async function getUserData(req: Request, res: Response) {}
+export async function getUserData(req: Request, res: Response) {
+  try {
+    const session = await getSession(req, res);
+    const validatedToken = await decrypt(session);
+
+    if (!validatedToken) {
+      return res
+        .status(403)
+        .json({ message: "Invalid session. Please login again." });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: {
+        id: `${validatedToken.userId}`,
+      },
+      select: {
+        name: true,
+        email: true,
+      },
+    });
+
+    if(!user) {
+      return res.status(404).json({message: "user not found"})
+    }
+
+    return res.status(200).json(user);
+  } catch (error) {
+    responseServerError(error, res);
+  }
+}
 
 export async function updateProfile(req: Request, res: Response) {}
 
