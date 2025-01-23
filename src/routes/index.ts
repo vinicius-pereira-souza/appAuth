@@ -23,7 +23,7 @@ const router = Router()
   .patch("/change-password", isAuthenticated, changePassword)
   .post("/forgot-password", forgetPassword)
   .post("/logout", isAuthenticated, logout)
-  .delete("/delete-account", isAuthenticated, deleteAccount)
+  .post("/delete-account", isAuthenticated, deleteAccount)
   .get("/", isAuthenticated, getUserData);
 
 export default router;

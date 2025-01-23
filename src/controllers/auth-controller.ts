@@ -8,6 +8,7 @@ import { hashSync, compareSync } from "bcrypt";
 import { createSession, decrypt, getSession } from "../lib/session";
 import { responseServerError } from "../utils";
 import { PrismaClient } from "@prisma/client";
+import { passwordSchema } from "../lib/fields-schema";
 
 const prisma = new PrismaClient();
 
@@ -272,4 +273,77 @@ export async function logout(req: Request, res: Response) {
   }
 }
 
-export async function deleteAccount(req: Request, res: Response) {}
+export async function deleteAccount(req: Request, res: Response) {
+  try {
+    const session = await getSession(req, res);
+    const validatedToken = await decrypt(session);
+
+    if (!validatedToken) {
+      return res.status(403).json({
+        status: "error",
+        type: "deleteAccount_error",
+        error: {
+          code: 403,
+          details: "Invalid session. Please login again.",
+        },
+      });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: `${validatedToken.userId}` },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        status: "error",
+        type: "deleteAccount_error",
+        error: { code: 404, details: "User not found" },
+      });
+    }
+
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({
+        status: "error",
+        type: "deleteAccount_error",
+        error: { code: 400, details: "Password is required" },
+      });
+    }
+
+    if (!compareSync(password, user.password)) {
+      return res.status(400).json({
+        status: "error",
+        type: "deleteAccount_error",
+        error: { code: 400, details: "Incorrect password" },
+      });
+    }
+
+    await prisma.user.delete({ where: { id: `${validatedToken.userId}` } });
+
+    req.session.destroy((error) => {
+      if (error) {
+        console.error("Error during session destruction", error);
+        return res.status(500).json({
+          status: "error",
+          type: "deleteAccount_error",
+          error: { code: 500, details: "Error during logout" },
+        });
+      }
+    });
+
+    res.clearCookie("session");
+
+    return res.status(200).json({
+      status: "success",
+      type: "deleteAccount_success",
+      data: {
+        code: 200,
+        details: "Your account has been deleted successfully",
+      },
+    });
+  } catch (error) {
+    console.error("Unexpected error in deleteAccount:", error);
+    return responseServerError(error, res);
+  }
+}
