@@ -3,12 +3,12 @@ import {
   loginFormSchema,
   signupFormSchema,
   changePasswordSchema,
+  updateProfileSchema,
 } from "../lib/validations";
 import { hashSync, compareSync } from "bcrypt";
 import { createSession, decrypt, getSession } from "../lib/session";
 import { responseServerError } from "../utils";
 import { PrismaClient } from "@prisma/client";
-import { passwordSchema } from "../lib/fields-schema";
 
 const prisma = new PrismaClient();
 
@@ -28,7 +28,7 @@ export async function signup(req: Request, res: Response) {
     }
 
     const userExist = await prisma.user.findFirst({
-      where: { OR: [{ email: data.email }, { name: data.username }] },
+      where: { OR: [{ email: data.email }, { name: data.name }] },
     });
 
     if (userExist) {
@@ -37,16 +37,16 @@ export async function signup(req: Request, res: Response) {
         type: "signup_error",
         error: {
           code: 400,
-          details: "the username or email already exists",
+          details: "the name or email already exists",
         },
       });
     }
 
-    const { username, email, password } = data;
+    const { name, email, password } = data;
     const passwordHash = hashSync(password, 10);
 
     const user = await prisma.user.create({
-      data: { email, password: passwordHash, name: username },
+      data: { email, password: passwordHash, name: name },
     });
 
     if (!user) {
@@ -178,7 +178,70 @@ export async function getUserData(req: Request, res: Response) {
   }
 }
 
-export async function updateProfile(req: Request, res: Response) {}
+export async function updateProfile(req: Request, res: Response) {
+  try {
+    const session = await getSession(req, res);
+    const validatedToken = await decrypt(session);
+
+    if (!validatedToken) {
+      return res.status(403).json({
+        status: "error",
+        type: "updateUserData_error",
+        error: {
+          code: 403,
+          details: "Invalid session. Please login again.",
+        },
+      });
+    }
+
+    const { error, data } = updateProfileSchema.safeParse(req.body);
+
+    if (error) {
+      return res.status(403).json({
+        status: "error",
+        type: "updateProfile_error",
+        error: {
+          code: 400,
+          details: error.flatten().fieldErrors,
+        },
+      });
+    }
+
+    const user = await prisma.user.update({
+      where: { id: `${validatedToken.userId}` },
+      data: { ...data },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(422).json({
+        status: "error",
+        type: "updataProfile_error",
+        error: {
+          code: 422,
+          details:
+            "Unable to update profile information. Please try again later",
+        },
+      });
+    }
+
+    return res.status(200).json({
+      status: "success",
+      type: "updataProfile_success",
+      data: {
+        code: 200,
+        user,
+        details: "profile information updated successfully",
+      },
+    });
+  } catch (error) {
+    responseServerError(error, res);
+  }
+}
 
 export async function changePassword(req: Request, res: Response) {
   try {

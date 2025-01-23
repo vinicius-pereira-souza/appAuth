@@ -3,7 +3,7 @@ import { usernameSchema, emailSchema, passwordSchema } from "./fields-schema";
 
 export const signupFormSchema = z
   .object({
-    username: usernameSchema,
+    name: usernameSchema,
     email: emailSchema,
     password: passwordSchema,
     confirmpassword: passwordSchema,
@@ -28,3 +28,8 @@ export const changePasswordSchema = z
     path: ["confirmNewPassword"],
     message: "Password confirmation must be the same as the password.",
   });
+
+export const updateProfileSchema = z.object({
+  name: usernameSchema.optional(),
+  email: emailSchema.optional(),
+});
