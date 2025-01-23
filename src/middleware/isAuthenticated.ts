@@ -10,9 +10,14 @@ export default async function isAuthenticated(
   try {
     const cookie = req.cookies.session;
     if (!cookie) {
-      return res
-        .status(401)
-        .json({ message: "Cookie not found. Please log in." });
+      return res.status(401).json({
+        status: "error",
+        type: "authValidation_error",
+        error: {
+          code: 401,
+          details: "Cookie not found. Please log in.",
+        },
+      });
     }
 
     const session = await getSession(req, res);
@@ -20,9 +25,11 @@ export default async function isAuthenticated(
     const validateSessionToken = await decrypt(session);
 
     if (!validateSessionToken) {
-      return res
-        .status(403)
-        .json({ message: "Invalid session token. Please log in again." });
+      return res.status(403).json({
+        status: "error",
+        type: "authValidation_error",
+        error: { code: 403, details: "Invalid session token" },
+      });
     }
 
     next();
