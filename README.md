@@ -33,10 +33,10 @@ Endpoints Concluídos
 - [x] Buscar Dados do Usuário (GET /me)
       Retorna os dados do usuário autenticado, exceto a senha.
 
-- [x] Deletar Conta (DELETE /delete-account)
+- [x] Deletar Conta (POST /delete-account)
       Exclusão definitiva da conta do usuário.
 
-- [x] Atualizar Perfil (PUT /update-profile)
+- [x] Atualizar Perfil (PATCH /update-profile)
       Permitir que o usuário atualize suas informações.
 
 ## Endpoints Planejados
@@ -54,4 +54,4 @@ Endpoints Concluídos
 - Passos para Configuração
 - Clone este repositório:
 
-**(Ainda em desenvolviment)**
+**(Ainda em desenvolvimento)**
