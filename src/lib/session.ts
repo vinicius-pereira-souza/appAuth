@@ -46,9 +46,14 @@ export async function getSession(req: Request, res: Response) {
   try {
     const sessionToken: string | undefined = req.session.user?.session;
     if (!sessionToken) {
-      res
-        .status(401)
-        .json({ message: "Session token not found. Please log in." });
+      res.status(401).json({
+        status: "error",
+        type: "authValidation_error",
+        error: {
+          code: 401,
+          details: "Session token not found. Please log in.",
+        },
+      });
     }
 
     return sessionToken;
